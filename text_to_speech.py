@@ -1,7 +1,17 @@
-from TTS.api import TTS
-tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=True)
+from transformers import SpeechT5Processor, SpeechT5ForTextToSpeech, SpeechT5HifiGan
+import torch
+import soundfile as sf
 
-tts.tts_to_file(text="It took me quite a long time to develop a voice, and now that I have it I'm not going to be silent.",
-                file_path="output.wav",
-                speaker_wav="/path/to/target/speaker.wav",
-                language="en")
+processor = SpeechT5Processor.from_pretrained("microsoft/speecht5_tts")
+model = SpeechT5ForTextToSpeech.from_pretrained("microsoft/speecht5_tts")
+vocoder = SpeechT5HifiGan.from_pretrained("microsoft/speecht5_hifigan")
+
+speaker_embeddings = torch.randn(1, 512) * 0.1
+
+def text_to_speech(text):
+    inputs = processor(text=text, return_tensors="pt")
+
+    speech = model.generate_speech(inputs["input_ids"], speaker_embeddings, vocoder=vocoder)
+
+    sf.write("output_speech.wav", speech.numpy(), samplerate=16000)
+    print("Audio saved to output_speech.wav")

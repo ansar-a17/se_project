@@ -2,18 +2,20 @@ import threading
 from pynput import keyboard
 import mss
 from PIL import Image
+from image_to_text import image_to_text
+from text_to_speech import text_to_speech
 
 HOTKEY = '<f9>'
 
 def process_image(img: Image.Image):
     print("Captured image size:", img.size)
-    img.save("last_capture.png")
-
+    text = image_to_text(img)
+    text_to_speech(text)
 
 def take_screenshot():
     try:
         with mss.mss() as sct:
-            monitor = sct.monitors[2]
+            monitor = sct.monitors[1]
             sct_img = sct.grab(monitor)
             img = Image.frombytes("RGB", sct_img.size, sct_img.rgb)
         process_image(img)

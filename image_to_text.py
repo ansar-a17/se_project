@@ -1,14 +1,24 @@
 from PIL import Image
 from transformers import pipeline
 
-pipe = pipeline("image-text-to-text", model="Salesforce/blip2-opt-2.7b")
+def image_to_text(image: Image):
+    pipe = pipeline("image-to-text", model="Salesforce/blip2-opt-2.7b")
 
-img = Image.open("example.png")
-result = pipe(img)
+    result = pipe(image)
 
-if isinstance(result, list):
-    text = result[0].get("generated_text", result[0])
-else:
-    text = result
+    if isinstance(result, list):
+        first = result[0]
+        if isinstance(first, dict):
+            text = first.get("generated_text", "")
+        else:
+            text = str(first)
+    else:
+        if isinstance(result, dict):
+            text = result.get("generated_text", "")
+        else:
+            text = str(result)
 
-print(text)
+    if text:
+        text = text.strip()
+        
+    return text
