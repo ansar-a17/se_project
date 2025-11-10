@@ -2,8 +2,8 @@ import threading
 from pynput import keyboard
 import mss
 from PIL import Image
-from image_to_text import image_to_text
-from text_to_speech import text_to_speech
+from image_to_text.image_to_text import image_to_text
+from text_to_speech.text_to_speech import text_to_speech
 
 HOTKEY = '<f9>'
 

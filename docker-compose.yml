@@ -1,0 +1,36 @@
+services:
+  text-to-speech:
+    build:
+      context: .
+      dockerfile: text_to_speech/Dockerfile
+    container_name: text-to-speech-service
+    ports:
+      - "7999:7999"
+    volumes:
+      - ./audio_files:/app/audio_files
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:7999/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  image-to-text:
+    build:
+      context: .
+      dockerfile: image_to_text/Dockerfile
+    container_name: image-to-text-service
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  default:
+    name: se_project_network
