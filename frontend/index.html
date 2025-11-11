@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Screenshot to Audio</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      background: #1e1e1e;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #666;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .status-section {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .hotkey-badge {
+      display: inline-block;
+      background: #0e639c;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .button-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .capture-btn {
+      background: #0e639c;
+      color: white;
+      border: none;
+      padding: 16px 40px;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(14, 99, 156, 0.4);
+    }
+
+    .capture-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(14, 99, 156, 0.6);
+      background: #1177bb;
+    }
+
+    .capture-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .processing-section {
+      display: none;
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .processing-section.show {
+      display: block;
+    }
+
+    .processing-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .processing-step:last-child {
+      border-bottom: none;
+    }
+
+    .step-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .step-icon.pending {
+      background: #e5e7eb;
+      color: #9ca3af;
+    }
+
+    .step-icon.processing {
+      background: #0e639c;
+      color: white;
+      animation: spin 1s linear infinite;
+    }
+
+    .step-icon.complete {
+      background: #4ade80;
+      color: white;
+    }
+
+    .step-icon.error {
+      background: #ef4444;
+      color: white;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .step-text {
+      flex: 1;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .results-section {
+      display: none;
+    }
+
+    .results-section.show {
+      display: block;
+    }
+
+    .caption-box {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .caption-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #0e639c;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .caption-text {
+      color: #333;
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    .audio-player {
+      width: 100%;
+      margin-top: 10px;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .error-message {
+      display: none;
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .preview-section {
+      display: none;
+      margin-bottom: 20px;
+    }
+
+    .preview-section.show {
+      display: block;
+    }
+
+    .preview-image {
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SE project</h1>
+    <p class="subtitle">Narrate your screen</p>
+
+    <div class="status-section">
+      <div class="status-indicator">
+        <span class="status-dot"></span>
+        <span>Ready - Listening for hotkey</span>
+      </div>
+      <div class="hotkey-badge">F9</div>
+    </div>
+
+    <div class="button-section">
+      <button class="capture-btn" id="captureBtn">
+        Capture Screenshot
+      </button>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+
+    <div class="preview-section" id="previewSection">
+      <img class="preview-image" id="previewImage" alt="Screenshot preview" />
+    </div>
+
+    <div class="processing-section" id="processingSection">
+      <div class="processing-step">
+        <div class="step-icon pending" id="step1Icon">1</div>
+        <div class="step-text">Capturing screenshot...</div>
+      </div>
+      <div class="processing-step">
+        <div class="step-icon pending" id="step2Icon">2</div>
+        <div class="step-text">Analyzing image...</div>
+      </div>
+      <div class="processing-step">
+        <div class="step-icon pending" id="step3Icon">3</div>
+        <div class="step-text">Generating audio...</div>
+      </div>
+    </div>
+
+    <div class="results-section" id="resultsSection">
+      <div class="caption-box">
+        <div class="caption-label">Description</div>
+        <div class="caption-text" id="captionText"></div>
+      </div>
+      <audio class="audio-player" id="audioPlayer" controls></audio>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
