@@ -1,0 +1,6 @@
+torch==2.2.2
+OpenNMT-py==3.5.1
+numpy<2
+sacremoses
+subword-nmt
+pyyaml
