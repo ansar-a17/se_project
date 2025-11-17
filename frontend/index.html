@@ -114,6 +114,119 @@
       cursor: not-allowed;
     }
 
+    .mode-selector {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      background: #f8f9fa;
+      padding: 8px;
+      border-radius: 12px;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: 2px solid transparent;
+      background: transparent;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #666;
+    }
+
+    .mode-btn:hover {
+      background: #e5e7eb;
+    }
+
+    .mode-btn.active {
+      background: #0e639c;
+      color: white;
+      border-color: #0e639c;
+    }
+
+    .text-input-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: #0e639c;
+    }
+
+    .submit-btn {
+      background: #0e639c;
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(14, 99, 156, 0.4);
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(14, 99, 156, 0.6);
+      background: #1177bb;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .translate-section {
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .translate-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .translate-toggle input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: #0e639c;
+    }
+
+    .toggle-label {
+      color: #333;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .translation-box {
+      background: #e0f2fe;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 2px solid #0e639c;
+    }
+
     .processing-section {
       display: none;
       background: #f8f9fa;
@@ -252,9 +365,18 @@
 <body>
   <div class="container">
     <h1>SE project</h1>
-    <p class="subtitle">Narrate your screen</p>
+    <p class="subtitle">Narrate your screen or text</p>
 
-    <div class="status-section">
+    <div class="mode-selector">
+      <button class="mode-btn active" id="imageModeBtn" data-mode="image">
+        Image Mode
+      </button>
+      <button class="mode-btn" id="textModeBtn" data-mode="text">
+        Text Mode
+      </button>
+    </div>
+
+    <div class="status-section" id="statusSection">
       <div class="status-indicator">
         <span class="status-dot"></span>
         <span>Ready - Listening for hotkey</span>
@@ -262,10 +384,37 @@
       <div class="hotkey-badge">F9</div>
     </div>
 
-    <div class="button-section">
-      <button class="capture-btn" id="captureBtn">
-        Capture Screenshot
-      </button>
+    <div class="input-section" id="inputSection">
+      <!-- Image Mode -->
+      <div class="image-mode" id="imageMode">
+        <div class="button-section">
+          <button class="capture-btn" id="captureBtn">
+            Capture Screenshot
+          </button>
+        </div>
+      </div>
+
+      <!-- Text Mode -->
+      <div class="text-mode" id="textMode" style="display: none;">
+        <div class="text-input-container">
+          <textarea 
+            class="text-input" 
+            id="textInput" 
+            placeholder="Enter your text here..."
+            rows="5"
+          ></textarea>
+          <button class="submit-btn" id="submitTextBtn">
+            Generate Speech
+          </button>
+        </div>
+      </div>
+
+      <div class="translate-section">
+        <label class="translate-toggle">
+          <input type="checkbox" id="translateCheckbox" />
+          <span class="toggle-label">Translate to Dutch</span>
+        </label>
+      </div>
     </div>
 
     <div class="error-message" id="errorMessage"></div>
@@ -275,16 +424,20 @@
     </div>
 
     <div class="processing-section" id="processingSection">
-      <div class="processing-step">
+      <div class="processing-step" id="step1Container">
         <div class="step-icon pending" id="step1Icon">1</div>
-        <div class="step-text">Capturing screenshot...</div>
+        <div class="step-text" id="step1Text">Capturing screenshot...</div>
       </div>
-      <div class="processing-step">
+      <div class="processing-step" id="step2Container">
         <div class="step-icon pending" id="step2Icon">2</div>
-        <div class="step-text">Analyzing image...</div>
+        <div class="step-text" id="step2Text">Analyzing image...</div>
       </div>
-      <div class="processing-step">
+      <div class="processing-step" id="step3Container">
         <div class="step-icon pending" id="step3Icon">3</div>
+        <div class="step-text">Translating text...</div>
+      </div>
+      <div class="processing-step" id="step4Container">
+        <div class="step-icon pending" id="step4Icon">4</div>
         <div class="step-text">Generating audio...</div>
       </div>
     </div>
@@ -293,6 +446,10 @@
       <div class="caption-box">
         <div class="caption-label">Description</div>
         <div class="caption-text" id="captionText"></div>
+      </div>
+      <div class="translation-box" id="translationBox" style="display: none;">
+        <div class="caption-label">Original (English)</div>
+        <div class="caption-text" id="originalText"></div>
       </div>
       <audio class="audio-player" id="audioPlayer" controls></audio>
     </div>
