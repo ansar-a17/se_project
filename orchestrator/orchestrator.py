@@ -1,7 +1,6 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Query
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import httpx
 import uvicorn
 import logging
@@ -24,7 +23,6 @@ app.add_middleware(
 
 IMAGE_TO_TEXT_URL = os.getenv("IMAGE_TO_TEXT_URL", "http://localhost:8000")
 TEXT_TO_SPEECH_URL = os.getenv("TEXT_TO_SPEECH_URL", "http://localhost:7999")
-TRANSLATION_URL = os.getenv("TRANSLATION_URL", "http://localhost:8003")
 
 TIMEOUT = 120.0
 
@@ -48,7 +46,6 @@ async def health_check():
         "orchestrator": "healthy",
         "image_to_text": "unknown",
         "text_to_speech": "unknown",
-        "translation": "unknown",
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
     
@@ -72,33 +69,19 @@ async def health_check():
         health_status["text_to_speech"] = f"unhealthy: {str(e)}"
         logger.warning(f"Text-to-speech service health check failed: {e}")
     
-    # Check translation service
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{TRANSLATION_URL}/health")
-            if response.status_code == 200:
-                health_status["translation"] = "healthy"
-    except Exception as e:
-        health_status["translation"] = f"unhealthy: {str(e)}"
-        logger.warning(f"Translation service health check failed: {e}")
-    
     return health_status
 
 
 @app.post("/process_screenshot")
-async def process_screenshot(
-    file: UploadFile = File(...),
-    translate: bool = Query(False, description="Translate text to Dutch before speech synthesis")
-):
+async def process_screenshot(file: UploadFile = File(...)):
     """
     Main orchestration endpoint:
     1. Receives screenshot from frontend
     2. Sends to image_to_text service
-    3. (Optional) Translates text to Dutch if translate=true
-    4. Sends result to text_to_speech service
-    5. Returns audio file to frontend
+    3. Sends result to text_to_speech service
+    4. Returns audio file to frontend
     """
-    logger.info(f"Processing screenshot: {file.filename}, translate={translate}")
+    logger.info(f"Processing screenshot: {file.filename}")
     
     try:
         # Read the uploaded file
@@ -124,96 +107,9 @@ async def process_screenshot(
             )
         
         logger.info(f"Image analysis complete. Text: {text[:100]}...")
-        return await process_text_to_speech(text, translate)
         
-    except httpx.TimeoutException as e:
-        logger.error(f"Timeout error: {e}")
-        raise HTTPException(
-            status_code=504,
-            detail="Request timed out. The AI models may be loading or the request is too large."
-        )
-    
-    except httpx.HTTPStatusError as e:
-        logger.error(f"HTTP error from downstream service: {e}")
-        raise HTTPException(
-            status_code=e.response.status_code,
-            detail=f"Downstream service error: {e.response.text}"
-        )
-    
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-        )
-
-
-class TextRequest(BaseModel):
-    text: str
-
-
-@app.post("/process_text")
-async def process_text(
-    request: TextRequest,
-    translate: bool = Query(False, description="Translate text to Dutch before speech synthesis")
-):
-    """
-    Text-only orchestration endpoint:
-    1. Receives text from frontend
-    2. (Optional) Translates text to Dutch if translate=true
-    3. Sends result to text_to_speech service
-    4. Returns audio file to frontend
-    """
-    logger.info(f"Processing text input, translate={translate}")
-    
-    try:
-        text = request.text.strip()
-        if not text:
-            raise HTTPException(
-                status_code=422,
-                detail="Text cannot be empty."
-            )
-        
-        logger.info(f"Received text: {text[:100]}...")
-        return await process_text_to_speech(text, translate)
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-        )
-
-
-async def process_text_to_speech(text: str, translate: bool = False):
-    """
-    Helper function to process text through translation and TTS
-    """
-    try:
-        original_text = text
-        
-        # Step: (Optional) Translate text to Dutch
-        if translate:
-            logger.info("Translating text to Dutch...")
-            try:
-                async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-                    response = await client.post(
-                        f"{TRANSLATION_URL}/translate",
-                        json={"text": text, "source_lang": "en", "target_lang": "nl"}
-                    )
-                    response.raise_for_status()
-                    translation_result = response.json()
-                
-                text = translation_result.get("translated_text", text)
-                logger.info(f"Translation complete. Translated text: {text[:100]}...")
-            except Exception as e:
-                logger.warning(f"Translation failed, using original text: {e}")
-                # Continue with original text if translation fails
-        
-        # Step: Send text to text_to_speech service
-        logger.info("Sending text to text_to_speech service...")
+        # Step 2: Send text to text_to_speech service
+        logger.info("Step 2: Sending text to text_to_speech service...")
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             response = await client.post(
                 f"{TEXT_TO_SPEECH_URL}/text_to_speech",
@@ -232,20 +128,14 @@ async def process_text_to_speech(text: str, translate: bool = False):
             f.write(audio_content)
         
         # Return the audio file with the text in headers
-        headers = {
-            "X-Caption-Text": text,
-            "X-Processing-Complete": "true"
-        }
-        
-        if translate:
-            headers["X-Original-Text"] = original_text
-            headers["X-Translated"] = "true"
-        
         return FileResponse(
             temp_audio_path,
             media_type="audio/wav",
             filename="speech.wav",
-            headers=headers
+            headers={
+                "X-Caption-Text": text,
+                "X-Processing-Complete": "true"
+            }
         )
         
     except httpx.TimeoutException as e:

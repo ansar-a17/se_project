@@ -1,40 +1,20 @@
 import axios from 'axios';
 
 const ORCHESTRATOR_URL = '/api/process';
-const TEXT_PROCESS_URL = '/api/process_text';
 const HEALTH_URL = '/api/health';
 
 const captureBtn = document.getElementById('captureBtn') as HTMLButtonElement;
-const submitTextBtn = document.getElementById('submitTextBtn') as HTMLButtonElement;
-const textInput = document.getElementById('textInput') as HTMLTextAreaElement;
-const imageModeBtn = document.getElementById('imageModeBtn') as HTMLButtonElement;
-const textModeBtn = document.getElementById('textModeBtn') as HTMLButtonElement;
-const imageMode = document.getElementById('imageMode') as HTMLDivElement;
-const textMode = document.getElementById('textMode') as HTMLDivElement;
-const statusSection = document.getElementById('statusSection') as HTMLDivElement;
-const translateCheckbox = document.getElementById('translateCheckbox') as HTMLInputElement;
 const processingSection = document.getElementById('processingSection') as HTMLDivElement;
 const resultsSection = document.getElementById('resultsSection') as HTMLDivElement;
 const errorMessage = document.getElementById('errorMessage') as HTMLDivElement;
 const previewSection = document.getElementById('previewSection') as HTMLDivElement;
 const previewImage = document.getElementById('previewImage') as HTMLImageElement;
 const captionText = document.getElementById('captionText') as HTMLDivElement;
-const originalText = document.getElementById('originalText') as HTMLDivElement;
-const translationBox = document.getElementById('translationBox') as HTMLDivElement;
 const audioPlayer = document.getElementById('audioPlayer') as HTMLAudioElement;
-const step1Container = document.getElementById('step1Container') as HTMLDivElement;
-const step2Container = document.getElementById('step2Container') as HTMLDivElement;
-const step3Container = document.getElementById('step3Container') as HTMLDivElement;
-const step4Container = document.getElementById('step4Container') as HTMLDivElement;
-const step1Text = document.getElementById('step1Text') as HTMLDivElement;
-const step2Text = document.getElementById('step2Text') as HTMLDivElement;
 
 const step1Icon = document.getElementById('step1Icon') as HTMLDivElement;
 const step2Icon = document.getElementById('step2Icon') as HTMLDivElement;
 const step3Icon = document.getElementById('step3Icon') as HTMLDivElement;
-const step4Icon = document.getElementById('step4Icon') as HTMLDivElement;
-
-let currentMode: 'image' | 'text' = 'image';
 
 interface ProcessingStep {
   icon: HTMLDivElement;
@@ -44,49 +24,8 @@ interface ProcessingStep {
 const steps: ProcessingStep[] = [
   { icon: step1Icon, status: 'pending' },
   { icon: step2Icon, status: 'pending' },
-  { icon: step3Icon, status: 'pending' },
-  { icon: step4Icon, status: 'pending' }
+  { icon: step3Icon, status: 'pending' }
 ];
-
-// Update step visibility based on translation toggle and mode
-function updateStepVisibility() {
-  const isTranslating = translateCheckbox.checked;
-  
-  if (currentMode === 'image') {
-    step1Container.style.display = 'flex';
-    step2Container.style.display = 'flex';
-    step1Text.textContent = 'Capturing screenshot...';
-    step2Text.textContent = 'Analyzing image...';
-  } else {
-    step1Container.style.display = 'none';
-    step2Container.style.display = 'none';
-  }
-  
-  step3Container.style.display = isTranslating ? 'flex' : 'none';
-  step4Container.style.display = 'flex';
-}
-
-function switchMode(mode: 'image' | 'text') {
-  currentMode = mode;
-  
-  // Update button states
-  if (mode === 'image') {
-    imageModeBtn.classList.add('active');
-    textModeBtn.classList.remove('active');
-    imageMode.style.display = 'block';
-    textMode.style.display = 'none';
-    statusSection.style.display = 'block';
-  } else {
-    textModeBtn.classList.add('active');
-    imageModeBtn.classList.remove('active');
-    textMode.style.display = 'block';
-    imageMode.style.display = 'none';
-    statusSection.style.display = 'none';
-  }
-  
-  hideResults();
-  updateStepVisibility();
-}
 
 function updateStepStatus(stepIndex: number, status: 'pending' | 'processing' | 'complete' | 'error') {
   const step = steps[stepIndex];
@@ -95,9 +34,9 @@ function updateStepStatus(stepIndex: number, status: 'pending' | 'processing' | 
   step.icon.className = `step-icon ${status}`;
   
   if (status === 'complete') {
-    step.icon.textContent = 'OK';;
+    step.icon.textContent = '✓';
   } else if (status === 'error') {
-    step.icon.textContent = 'X';
+    step.icon.textContent = '✕';
   } else {
     step.icon.textContent = (stepIndex + 1).toString();
   }
@@ -105,7 +44,6 @@ function updateStepStatus(stepIndex: number, status: 'pending' | 'processing' | 
 
 function resetSteps() {
   steps.forEach((_, index) => updateStepStatus(index, 'pending'));
-  updateStepVisibility();
 }
 
 function showError(message: string) {
@@ -168,13 +106,11 @@ async function captureScreenshot(): Promise<Blob> {
   }
 }
 
-async function sendToOrchestrator(imageBlob: Blob, translate: boolean): Promise<{ audio: Blob; caption: string; originalCaption?: string }> {
+async function sendToOrchestrator(imageBlob: Blob): Promise<{ audio: Blob; caption: string }> {
   const formData = new FormData();
   formData.append('file', imageBlob, 'screenshot.png');
 
-  const url = translate ? `${ORCHESTRATOR_URL}?translate=true` : ORCHESTRATOR_URL;
-
-  const response = await axios.post(url, formData, {
+  const response = await axios.post(ORCHESTRATOR_URL, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     },
@@ -183,122 +119,11 @@ async function sendToOrchestrator(imageBlob: Blob, translate: boolean): Promise<
   });
 
   const caption = response.headers['x-caption-text'] || 'No caption available';
-  const originalCaption = response.headers['x-original-text'];
-  const wasTranslated = response.headers['x-translated'] === 'true';
   
   return {
     audio: response.data,
-    caption: caption,
-    originalCaption: wasTranslated ? originalCaption : undefined
+    caption: caption
   };
-}
-
-async function sendTextToOrchestrator(text: string, translate: boolean): Promise<{ audio: Blob; caption: string; originalCaption?: string }> {
-  const url = translate ? `${TEXT_PROCESS_URL}?translate=true` : TEXT_PROCESS_URL;
-
-  const response = await axios.post(url, { text }, {
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    responseType: 'blob',
-    timeout: 120000
-  });
-
-  const caption = response.headers['x-caption-text'] || text;
-  const originalCaption = response.headers['x-original-text'];
-  const wasTranslated = response.headers['x-translated'] === 'true';
-  
-  return {
-    audio: response.data,
-    caption: caption,
-    originalCaption: wasTranslated ? originalCaption : undefined
-  };
-}
-
-async function processText() {
-  const text = textInput.value.trim();
-  
-  if (!text) {
-    showError('Please enter some text to process.');
-    return;
-  }
-  
-  submitTextBtn.disabled = true;
-  hideResults();
-  resetSteps();
-  processingSection.classList.add('show');
-  previewSection.classList.remove('show');
-
-  const isTranslating = translateCheckbox.checked;
-
-  try {
-    const translationStep = 0;
-    const finalStep = isTranslating ? 1 : 0;
-    
-    if (isTranslating) {
-      updateStepStatus(translationStep, 'processing');
-    }
-    
-    updateStepStatus(finalStep, 'processing');
-    
-    const result = await sendTextToOrchestrator(text, isTranslating);
-    
-    if (isTranslating) {
-      updateStepStatus(translationStep, 'complete');
-    }
-    
-    updateStepStatus(finalStep, 'complete');
-
-    // Display results
-    captionText.textContent = result.caption;
-    
-    if (result.originalCaption) {
-      originalText.textContent = result.originalCaption;
-      translationBox.style.display = 'block';
-    } else {
-      translationBox.style.display = 'none';
-    }
-    
-    const audioUrl = URL.createObjectURL(result.audio);
-    audioPlayer.src = audioUrl;
-    
-    processingSection.classList.remove('show');
-    resultsSection.classList.add('show');
-    
-    audioPlayer.play();
-
-  } catch (error) {
-    console.error('Error processing text:', error);
-    
-    const currentStep = steps.findIndex(s => s.status === 'processing');
-    if (currentStep !== -1) {
-      updateStepStatus(currentStep, 'error');
-    }
-
-    let errorMsg = 'An error occurred while processing the text.';
-    
-    if (axios.isAxiosError(error)) {
-      const axiosErr = error as any;
-      if (axiosErr.code === 'ECONNABORTED') {
-        errorMsg = 'Request timed out. Please try again.';
-      } else if (axiosErr.response) {
-        const status = axiosErr.response.status;
-        if (status === 504) {
-          errorMsg = 'Request timed out. The AI models may be loading or processing.';
-        } else {
-          errorMsg = `Server error: ${status}`;
-        }
-      } else if (axiosErr.request) {
-        errorMsg = 'Cannot connect to the server. Make sure the backend services are running.';
-      }
-    } else if (error instanceof Error) {
-      errorMsg = error.message;
-    }
-
-    showError(errorMsg);
-  } finally {
-    submitTextBtn.disabled = false;
-  }
 }
 
 async function processScreenshot() {
@@ -306,8 +131,6 @@ async function processScreenshot() {
   hideResults();
   resetSteps();
   processingSection.classList.add('show');
-
-  const isTranslating = translateCheckbox.checked;
 
   try {
     updateStepStatus(0, 'processing');
@@ -319,34 +142,14 @@ async function processScreenshot() {
     previewSection.classList.add('show');
 
     updateStepStatus(1, 'processing');
+    updateStepStatus(2, 'processing');
     
-    if (isTranslating) {
-      updateStepStatus(2, 'processing');
-    }
-    
-    const finalStepIndex = isTranslating ? 3 : 2;
-    updateStepStatus(finalStepIndex, 'processing');
-    
-    const result = await sendToOrchestrator(imageBlob, isTranslating);
+    const result = await sendToOrchestrator(imageBlob);
     
     updateStepStatus(1, 'complete');
-    
-    if (isTranslating) {
-      updateStepStatus(2, 'complete');
-    }
-    
-    updateStepStatus(finalStepIndex, 'complete');
+    updateStepStatus(2, 'complete');
 
-    // Display results
     captionText.textContent = result.caption;
-    
-    if (result.originalCaption) {
-      originalText.textContent = result.originalCaption;
-      translationBox.style.display = 'block';
-    } else {
-      translationBox.style.display = 'none';
-    }
-    
     const audioUrl = URL.createObjectURL(result.audio);
     audioPlayer.src = audioUrl;
     
@@ -392,20 +195,9 @@ async function processScreenshot() {
 }
 
 captureBtn.addEventListener('click', processScreenshot);
-submitTextBtn.addEventListener('click', processText);
-
-// Mode switching
-imageModeBtn.addEventListener('click', () => switchMode('image'));
-textModeBtn.addEventListener('click', () => switchMode('text'));
-
-// Update step visibility when checkbox changes
-translateCheckbox.addEventListener('change', updateStepVisibility);
-
-// Initialize step visibility
-updateStepVisibility();
 
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'F9' && !captureBtn.disabled && currentMode === 'image') {
+  if (event.key === 'F9' && !captureBtn.disabled) {
     event.preventDefault();
     processScreenshot();
   }
