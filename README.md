@@ -10,6 +10,26 @@ A microservices-based application that converts screenshots into audio descripti
 - **Orchestrated Workflow**: Seamless coordination between services via an orchestrator
 - **Modern Frontend**: Clean, user-friendly TypeScript/Vite interface
 
+## Architecture
+
+```mermaid
+graph LR
+    A[User] -->|Upload Image| B[Frontend<br/>Port 3000]
+    B -->|HTTP Request| C[Orchestrator<br/>Port 5000]
+    C -->|1. Image| D[Image-to-Text<br/>Port 8000]
+    D -->|Caption Text| C
+    C -->|2. Text| E[Text-to-Speech<br/>Port 7999]
+    E -->|Audio File| C
+    C -->|Audio Response| B
+    B -->|Play Audio| A
+    
+    style A fill:#e1f5ff
+    style B fill:#fff3e0
+    style C fill:#f3e5f5
+    style D fill:#e8f5e9
+    style E fill:#ffe0b2
+```
+
 ## System Flow
 
 ```

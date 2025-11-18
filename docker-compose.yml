@@ -35,23 +35,6 @@ services:
     networks:
       - se_project_network
 
-  translation:
-    build:
-      context: .
-      dockerfile: translation_model/Dockerfile
-    container_name: translation-service
-    ports:
-      - "8003:8003"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8003/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    networks:
-      - se_project_network
-
   orchestrator:
     build:
       context: ./orchestrator
@@ -62,21 +45,18 @@ services:
     environment:
       - IMAGE_TO_TEXT_URL=http://image-to-text:8000
       - TEXT_TO_SPEECH_URL=http://text-to-speech:7999
-      - TRANSLATION_URL=http://translation:8003
     restart: unless-stopped
     depends_on:
       image-to-text:
         condition: service_healthy
       text-to-speech:
         condition: service_healthy
-      translation:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/', timeout=5)"]
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health')"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 30s
+      retries: 3
+      start_period: 10s
     networks:
       - se_project_network
 
@@ -95,8 +75,8 @@ services:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 20s
+      retries: 3
+      start_period: 10s
     networks:
       - se_project_network
 
