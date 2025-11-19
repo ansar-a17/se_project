@@ -1,5 +1,6 @@
 services:
   text-to-speech:
+  # Build TTS service container
     build:
       context: .
       dockerfile: text_to_speech/Dockerfile
@@ -9,6 +10,7 @@ services:
     volumes:
       - ./audio_files:/app/audio_files
     restart: unless-stopped
+    # Check if service root endpoint responds
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:7999/')"]
       interval: 30s
@@ -19,6 +21,7 @@ services:
       - se_project_network
 
   image-to-text:
+  # Build image captioning service
     build:
       context: .
       dockerfile: image_to_text/Dockerfile
@@ -26,6 +29,7 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    # Basic HTTP health check
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/')"]
       interval: 30s
@@ -36,6 +40,7 @@ services:
       - se_project_network
 
   translation:
+  # Build translation service
     build:
       context: .
       dockerfile: translation_model/Dockerfile
@@ -43,6 +48,7 @@ services:
     ports:
       - "8003:8003"
     restart: unless-stopped
+    # Health endpoint for translation model
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8003/health')"]
       interval: 30s
@@ -53,6 +59,7 @@ services:
       - se_project_network
 
   orchestrator:
+    # Build orchestrator API container
     build:
       context: ./orchestrator
       dockerfile: Dockerfile
@@ -60,11 +67,13 @@ services:
     ports:
       - "5000:5000"
     environment:
+      # Inject service URLs so orchestrator can communicate internally
       - IMAGE_TO_TEXT_URL=http://image-to-text:8000
       - TEXT_TO_SPEECH_URL=http://text-to-speech:7999
       - TRANSLATION_URL=http://translation:8003
     restart: unless-stopped
     depends_on:
+      # Ensure orchestrator waits for dependencies to become healthy
       image-to-text:
         condition: service_healthy
       text-to-speech:
@@ -72,6 +81,7 @@ services:
       translation:
         condition: service_healthy
     healthcheck:
+      # Health check for orchestrator itself
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/', timeout=5)"]
       interval: 30s
       timeout: 10s
@@ -81,6 +91,7 @@ services:
       - se_project_network
 
   frontend:
+    # Build frontend (served via nginx)
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -92,6 +103,7 @@ services:
       orchestrator:
         condition: service_healthy
     healthcheck:
+      # Check that the static site is served
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
@@ -100,6 +112,7 @@ services:
     networks:
       - se_project_network
 
+# Shared virtual network between services
 networks:
   se_project_network:
     driver: bridge

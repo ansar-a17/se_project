@@ -12,8 +12,10 @@ from typing import Optional
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# FastAPI service initialization
 app = FastAPI(title="Screenshot Orchestrator Service")
 
+# Allow CORS for all origins (frontend access)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,15 +24,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Downstream service URLs (overridden by environment variables)
 IMAGE_TO_TEXT_URL = os.getenv("IMAGE_TO_TEXT_URL", "http://localhost:8000")
 TEXT_TO_SPEECH_URL = os.getenv("TEXT_TO_SPEECH_URL", "http://localhost:7999")
 TRANSLATION_URL = os.getenv("TRANSLATION_URL", "http://localhost:8003")
 
+# Timeout for requests to downstream services
 TIMEOUT = 120.0
 
 
 @app.get("/")
 async def home():
+    """Root endpoint describing the service."""
     return {
         "service": "Screenshot Orchestrator",
         "status": "running",

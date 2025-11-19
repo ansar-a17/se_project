@@ -1,9 +1,11 @@
 import axios from 'axios';
 
+// API endpoints
 const ORCHESTRATOR_URL = '/api/process';
 const TEXT_PROCESS_URL = '/api/process_text';
 const HEALTH_URL = '/api/health';
 
+// UI elements
 const captureBtn = document.getElementById('captureBtn') as HTMLButtonElement;
 const submitTextBtn = document.getElementById('submitTextBtn') as HTMLButtonElement;
 const textInput = document.getElementById('textInput') as HTMLTextAreaElement;
@@ -22,6 +24,8 @@ const captionText = document.getElementById('captionText') as HTMLDivElement;
 const originalText = document.getElementById('originalText') as HTMLDivElement;
 const translationBox = document.getElementById('translationBox') as HTMLDivElement;
 const audioPlayer = document.getElementById('audioPlayer') as HTMLAudioElement;
+
+// Step UI containers and labels
 const step1Container = document.getElementById('step1Container') as HTMLDivElement;
 const step2Container = document.getElementById('step2Container') as HTMLDivElement;
 const step3Container = document.getElementById('step3Container') as HTMLDivElement;
@@ -29,6 +33,7 @@ const step4Container = document.getElementById('step4Container') as HTMLDivEleme
 const step1Text = document.getElementById('step1Text') as HTMLDivElement;
 const step2Text = document.getElementById('step2Text') as HTMLDivElement;
 
+// Step icons
 const step1Icon = document.getElementById('step1Icon') as HTMLDivElement;
 const step2Icon = document.getElementById('step2Icon') as HTMLDivElement;
 const step3Icon = document.getElementById('step3Icon') as HTMLDivElement;
@@ -36,11 +41,13 @@ const step4Icon = document.getElementById('step4Icon') as HTMLDivElement;
 
 let currentMode: 'image' | 'text' = 'image';
 
+// tracking step status
 interface ProcessingStep {
   icon: HTMLDivElement;
   status: 'pending' | 'processing' | 'complete' | 'error';
 }
 
+// List of steps for UI updates
 const steps: ProcessingStep[] = [
   { icon: step1Icon, status: 'pending' },
   { icon: step2Icon, status: 'pending' },
@@ -88,6 +95,7 @@ function switchMode(mode: 'image' | 'text') {
   updateStepVisibility();
 }
 
+// Update icon appearance and label
 function updateStepStatus(stepIndex: number, status: 'pending' | 'processing' | 'complete' | 'error') {
   const step = steps[stepIndex];
   step.status = status;
@@ -103,11 +111,13 @@ function updateStepStatus(stepIndex: number, status: 'pending' | 'processing' | 
   }
 }
 
+// Reset all step icons to pending
 function resetSteps() {
   steps.forEach((_, index) => updateStepStatus(index, 'pending'));
   updateStepVisibility();
 }
 
+// Display a temporary error message
 function showError(message: string) {
   errorMessage.textContent = message;
   errorMessage.classList.add('show');
@@ -116,12 +126,14 @@ function showError(message: string) {
   }, 5000);
 }
 
+// Hide all result-related sections
 function hideResults() {
   resultsSection.classList.remove('show');
   previewSection.classList.remove('show');
   processingSection.classList.remove('show');
 }
 
+// Capture a screenshot from screen share
 async function captureScreenshot(): Promise<Blob> {
   try {
     const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -168,6 +180,7 @@ async function captureScreenshot(): Promise<Blob> {
   }
 }
 
+// Send screenshot to backend orchestrator
 async function sendToOrchestrator(imageBlob: Blob, translate: boolean): Promise<{ audio: Blob; caption: string; originalCaption?: string }> {
   const formData = new FormData();
   formData.append('file', imageBlob, 'screenshot.png');
@@ -193,6 +206,7 @@ async function sendToOrchestrator(imageBlob: Blob, translate: boolean): Promise<
   };
 }
 
+// Send raw text to backend orchestrator
 async function sendTextToOrchestrator(text: string, translate: boolean): Promise<{ audio: Blob; caption: string; originalCaption?: string }> {
   const url = translate ? `${TEXT_PROCESS_URL}?translate=true` : TEXT_PROCESS_URL;
 
@@ -215,6 +229,7 @@ async function sendTextToOrchestrator(text: string, translate: boolean): Promise
   };
 }
 
+// Process entered text and update UI
 async function processText() {
   const text = textInput.value.trim();
   
@@ -301,6 +316,7 @@ async function processText() {
   }
 }
 
+// Process screenshot and update UI
 async function processScreenshot() {
   captureBtn.disabled = true;
   hideResults();
@@ -391,6 +407,7 @@ async function processScreenshot() {
   }
 }
 
+// Button listeners
 captureBtn.addEventListener('click', processScreenshot);
 submitTextBtn.addEventListener('click', processText);
 
@@ -404,6 +421,7 @@ translateCheckbox.addEventListener('change', updateStepVisibility);
 // Initialize step visibility
 updateStepVisibility();
 
+// F9 keyboard shortcut
 document.addEventListener('keydown', (event) => {
   if (event.key === 'F9' && !captureBtn.disabled && currentMode === 'image') {
     event.preventDefault();
@@ -414,6 +432,7 @@ document.addEventListener('keydown', (event) => {
 console.log('Screenshot to Audio frontend initialized');
 console.log('Press F9 or click the button to capture a screenshot');
 
+// Check backend health on startup
 async function checkBackendHealth() {
   try {
     const response = await axios.get(HEALTH_URL, { timeout: 5000 });
