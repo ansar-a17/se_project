@@ -14,13 +14,13 @@ class TextOut(BaseModel):
 pipe = pipeline("image-to-text", model="Salesforce/blip-image-captioning-base")
 
 @app.post("/image_to_text", response_model=TextOut)
-async def image_to_text(file: UploadFile = File(...)):
-    contents = await file.read()
-    image = Image.open(io.BytesIO(contents))
+async def image_to_text(file: UploadFile = File(...)): 
+    contents = await file.read() 
+    image = Image.open(io.BytesIO(contents)) 
     
-    result = pipe(image)
+    result = pipe(image)  
 
-    if isinstance(result, list):
+    if isinstance(result, list):  
         first = result[0]
         if isinstance(first, dict):
             text = first.get("generated_text", "")

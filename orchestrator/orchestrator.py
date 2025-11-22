@@ -122,7 +122,7 @@ async def process_screenshot(file: UploadFile = File(...)):
         
         # Save audio temporarily
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
-        temp_audio_path = f"/tmp/orchestrator_audio_{timestamp}.wav"
+        temp_audio_path = f"orchestrator_audio_{timestamp}.wav"
         
         with open(temp_audio_path, "wb") as f:
             f.write(audio_content)
@@ -151,7 +151,9 @@ async def process_screenshot(file: UploadFile = File(...)):
             status_code=e.response.status_code,
             detail=f"Downstream service error: {e.response.text}"
         )
-    
+    except HTTPException:
+        raise 
+
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
         raise HTTPException(
