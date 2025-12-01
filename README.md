@@ -273,14 +273,14 @@ graph TD
     AB -->|Yes| F
     AB -->|No| AC[End Session]
     
-    style A fill:#e1f5ff
-    style C fill:#d4edda
-    style D fill:#d4edda
-    style O fill:#fff3cd
-    style R fill:#fff3cd
-    style T fill:#fff3cd
-    style Z fill:#d1ecf1
-    style AA fill:#d1ecf1
+    style A fill:#b3d9ff,stroke:#333,stroke-width:2px,color:#000
+    style C fill:#a8d5a8,stroke:#333,stroke-width:2px,color:#000
+    style D fill:#a8d5a8,stroke:#333,stroke-width:2px,color:#000
+    style O fill:#ffd966,stroke:#333,stroke-width:2px,color:#000
+    style R fill:#ffd966,stroke:#333,stroke-width:2px,color:#000
+    style T fill:#ffd966,stroke:#333,stroke-width:2px,color:#000
+    style Z fill:#99d6ea,stroke:#333,stroke-width:2px,color:#000
+    style AA fill:#99d6ea,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ### Complete User Journey - Text Mode
@@ -322,13 +322,13 @@ graph TD
     W -->|Yes| C
     W -->|No| X[End Session]
     
-    style A fill:#e1f5ff
-    style C fill:#d4edda
-    style G fill:#ffeaa7
-    style M fill:#fff3cd
-    style O fill:#fff3cd
-    style U fill:#d1ecf1
-    style V fill:#d1ecf1
+    style A fill:#b3d9ff,stroke:#333,stroke-width:2px,color:#000
+    style C fill:#a8d5a8,stroke:#333,stroke-width:2px,color:#000
+    style G fill:#ffe082,stroke:#333,stroke-width:2px,color:#000
+    style M fill:#ffd966,stroke:#333,stroke-width:2px,color:#000
+    style O fill:#ffd966,stroke:#333,stroke-width:2px,color:#000
+    style U fill:#99d6ea,stroke:#333,stroke-width:2px,color:#000
+    style V fill:#99d6ea,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ### Service Interaction Flow - With Translation
@@ -404,13 +404,13 @@ graph TD
     P --> S
     Q --> S
     
-    style C fill:#ffcccc
-    style E fill:#ffcccc
-    style I fill:#ffcccc
-    style J fill:#ffcccc
-    style K fill:#ffcccc
-    style L fill:#ccffcc
-    style R fill:#ccffcc
+    style C fill:#ff9999,stroke:#333,stroke-width:2px,color:#000
+    style E fill:#ff9999,stroke:#333,stroke-width:2px,color:#000
+    style I fill:#ff9999,stroke:#333,stroke-width:2px,color:#000
+    style J fill:#ff9999,stroke:#333,stroke-width:2px,color:#000
+    style K fill:#ff9999,stroke:#333,stroke-width:2px,color:#000
+    style L fill:#99ff99,stroke:#333,stroke-width:2px,color:#000
+    style R fill:#99ff99,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ---
