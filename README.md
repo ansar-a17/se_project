@@ -2,23 +2,23 @@
 
 A production-grade microservices application that transforms visual and textual content into natural-sounding speech using state-of-the-art AI models. The system provides two modes: **Image Mode** for screenshot narration and **Text Mode** for direct text-to-speech conversion, with optional Dutch translation support.
 
-## 🎯 Project Overview
+## Project Overview
 
 This system demonstrates a modern microservices architecture where specialized AI services work together to provide a seamless user experience. Users can capture screenshots or enter text, optionally translate content to Dutch, and receive natural audio narration—all through an intuitive web interface.
 
 ### Key Features
 
-- **🖼️ Image Mode**: Capture screenshots and receive AI-generated audio descriptions
-- **📝 Text Mode**: Enter text directly for instant speech synthesis
-- **🌐 Translation**: Optional English-to-Dutch translation powered by MarianMT
-- **🔊 Natural Speech**: High-quality speech synthesis using Microsoft SpeechT5
-- **🐳 Containerized**: Fully containerized with Docker for easy deployment
-- **💪 Resilient**: Health checks, auto-restart, and graceful error handling
-- **⚡ Modern Frontend**: TypeScript + Vite with real-time processing feedback
+- **Image Mode**: Capture screenshots and receive AI-generated audio descriptions
+- **Text Mode**: Enter text directly for instant speech synthesis
+- **Translation**: Optional English-to-Dutch translation powered by MarianMT
+- **Natural Speech**: High-quality speech synthesis using Microsoft SpeechT5
+- **Containerized**: Fully containerized with Docker for easy deployment
+- **Resilient**: Health checks, auto-restart, and graceful error handling
+- **Modern Frontend**: TypeScript + Vite with real-time processing feedback
 
 ---
 
-## 📊 System Architecture
+## System Architecture
 
 ### High-Level Architecture Diagram
 
@@ -90,7 +90,7 @@ This system demonstrates a modern microservices architecture where specialized A
 
 ---
 
-## 🔄 Processing Flow Diagrams
+## Processing Flow Diagrams
 
 ### Image Mode Workflow
 
@@ -228,7 +228,7 @@ This system demonstrates a modern microservices architecture where specialized A
 
 ---
 
-## 🎨 Mermaid User Flow Diagrams
+## Mermaid User Flow Diagrams
 
 ### Complete User Journey - Image Mode
 
@@ -415,7 +415,7 @@ graph TD
 
 ---
 
-## 🏗️ Service Components
+## Service Components
 
 ### 1. Frontend Service
 **Technology Stack**: TypeScript, Vite, Axios, HTML5/CSS3, Nginx  
@@ -536,7 +536,7 @@ TRANSLATION_URL=http://translation:8003
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### AI/ML Framework
 - **Transformers** (4.39.0+): Hugging Face library for model inference
@@ -569,7 +569,7 @@ TRANSLATION_URL=http://translation:8003
 
 ---
 
-## 📋 Project Structure
+## Project Structure
 
 ```
 se_project/
@@ -616,7 +616,7 @@ se_project/
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### Prerequisites
 
@@ -679,7 +679,7 @@ se_project/
 
 ---
 
-## 🔍 API Documentation
+## API Documentation
 
 ### Orchestrator Service (`localhost:5000`)
 
@@ -814,204 +814,13 @@ Converts text to speech audio.
 
 ---
 
-## 🔧 Development Guide
-
-### Running in Development Mode
-
-**Start all services with live logs**:
-```bash
-docker-compose up
-```
-
-**Run specific service**:
-```bash
-docker-compose up frontend
-```
-
-**Rebuild after code changes**:
-```bash
-docker-compose up --build orchestrator
-```
-
-### Viewing Logs
-
-**All services**:
-```bash
-docker-compose logs -f
-```
-
-**Specific service**:
-```bash
-docker-compose logs -f orchestrator
-```
-
-**Last 100 lines**:
-```bash
-docker-compose logs --tail=100 image-to-text
-```
-
-### Stopping Services
-
-**Graceful shutdown**:
-```bash
-docker-compose down
-```
-
-**Remove volumes and networks**:
-```bash
-docker-compose down -v
-```
-
-**Force remove containers**:
-```bash
-docker-compose down --remove-orphans
-```
-
-### Testing Individual Services
-
-**Test Image-to-Text**:
-```bash
-curl -X POST -F "file=@test_image.png" http://localhost:8000/image_to_text
-```
-
-**Test Translation**:
-```bash
-curl -X POST http://localhost:8003/translate \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Hello world", "source_lang": "en", "target_lang": "nl"}'
-```
-
-**Test Text-to-Speech**:
-```bash
-curl -X POST http://localhost:7999/text_to_speech \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Testing speech synthesis"}' \
-  --output test_audio.wav
-```
-
-**Test Orchestrator Health**:
-```bash
-curl http://localhost:5000/health
-```
-
----
-
-## 🧪 Troubleshooting
-
-### Services Not Starting
-
-**Problem**: Container exits immediately  
-**Solution**: Check logs for specific service:
-```bash
-docker-compose logs [service-name]
-```
-
-**Problem**: Out of memory errors  
-**Solution**: Increase Docker memory limit to 8GB:
-- Docker Desktop → Settings → Resources → Memory
-
-### Model Loading Issues
-
-**Problem**: "Model not loaded" errors  
-**Solution**: Models download on first run. Wait 5-10 minutes and check:
-```bash
-docker-compose logs translation
-```
-
-**Problem**: Slow inference  
-**Solution**: 
-- Ensure CPU has multiple cores
-- Consider GPU support (requires CUDA-enabled Docker)
-
-### Network Connectivity
-
-**Problem**: Services can't communicate  
-**Solution**: Verify network exists:
-```bash
-docker network ls | grep se_project_network
-```
-
-**Problem**: Frontend can't reach backend  
-**Solution**: Check Vite proxy configuration in `frontend/vite.config.ts`
-
-### Audio File Issues
-
-**Problem**: Audio files not playing  
-**Solution**: 
-- Check audio_files directory is mounted: `ls -la audio_files/`
-- Verify file permissions
-- Check browser console for errors
-
-### Port Conflicts
-
-**Problem**: "Port already in use"  
-**Solution**: 
-- Stop conflicting services
-- Or modify ports in `docker-compose.yml`
-
----
-
-## 📈 Performance Considerations
+## Performance Considerations
 
 ### Model Inference Times (CPU)
 - **Image Captioning**: 2-5 seconds
 - **Translation**: 1-2 seconds
 - **Speech Synthesis**: 3-8 seconds
 - **Total (with translation)**: ~10-15 seconds
-
-### Optimization Tips
-1. **GPU Support**: Enable CUDA for 5-10x faster inference
-2. **Model Caching**: Models are cached after first download
-3. **Concurrent Requests**: Services handle one request at a time (add replicas for scaling)
-4. **Audio Cleanup**: Automatically removes old files (keeps last 10)
-
----
-
-## 🔒 Security Considerations
-
-- **CORS**: Configured to allow all origins (adjust for production)
-- **File Uploads**: Limited to image files (add validation for production)
-- **Rate Limiting**: Not implemented (add for production)
-- **Authentication**: Not implemented (add for production)
-- **Input Validation**: Basic validation present (enhance for production)
-
----
-
-## 🚢 Deployment
-
-### Production Checklist
-
-- [ ] Set `CORS` to specific origins in `orchestrator.py`
-- [ ] Add rate limiting middleware
-- [ ] Configure HTTPS/SSL certificates
-- [ ] Set up log aggregation (ELK, CloudWatch, etc.)
-- [ ] Add monitoring (Prometheus, Grafana)
-- [ ] Configure auto-scaling for services
-- [ ] Set resource limits in docker-compose.yml
-- [ ] Add authentication/authorization
-- [ ] Configure backup strategy for audio_files
-- [ ] Set up CI/CD pipeline
-
-### Docker Hub Publishing
-
-```bash
-# Tag images
-docker tag se_project-frontend your-dockerhub/se_project-frontend:v1.0
-docker tag se_project-orchestrator your-dockerhub/se_project-orchestrator:v1.0
-
-# Push to registry
-docker push your-dockerhub/se_project-frontend:v1.0
-```
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ---
 
